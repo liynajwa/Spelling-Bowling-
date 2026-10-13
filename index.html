@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Spelling Bowling 3D</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Bungee&display=swap');
+
+:root{
+  --navy:#17143d;--purple:#7749ef;--pink:#ff5ca8;
+  --yellow:#ffe66d;--cyan:#62e8ff;--white:#fff;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;color:white;
+  font-family:'Baloo 2',sans-serif;
+  background:
+    radial-gradient(ellipse at 15% 15%,#5933a7 0,transparent 36%),
+    radial-gradient(ellipse at 90% 70%,#123e85 0,transparent 35%),
+    linear-gradient(145deg,#17143d,#24124f 60%,#071c44);
+  overflow-x:hidden;
+}
+button, input{font:inherit;touch-action:manipulation}
+button{cursor:pointer;border:0}
+button:focus-visible, input:focus-visible{outline:3px solid white;outline-offset:3px}
+.app{max-width:850px;margin:auto;padding:14px 14px 28px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.logo{font-family:'Bungee',sans-serif;font-size:clamp(19px,4vw,30px);line-height:1.2;
+  text-shadow:3px 4px 0 #4821a2}
+.logo span{color:var(--yellow)}
+.sound{background:#ffffff20;color:white;border:1px solid #ffffff40;
+  border-radius:14px;padding:8px 12px;font-weight:800}
+.hero{text-align:center;padding:14px 0 12px}
+.hero h1{font-family:'Bungee',sans-serif;font-size:clamp(22px,5vw,38px);
+  margin:8px 0;color:var(--yellow);text-shadow:3px 4px #5529aa}
+.hero p{margin:0;color:#dcd7ff;font-size:15px}
+.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}
+.stat{border:1px solid #ffffff25;background:#ffffff12;border-radius:17px;
+  padding:8px;text-align:center;box-shadow:inset 0 1px #ffffff10}
+.stat small{display:block;color:#cfc8ff;font-size:12px}
+.stat strong{font-family:'Bungee',sans-serif;font-size:clamp(17px,4vw,24px);color:var(--yellow)}
+.panel{background:#ffffff12;border:1px solid #ffffff30;border-radius:24px;
+  padding:14px;box-shadow:0 12px 35px #08062955}
+.levels{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.level-btn{flex:1;min-width:120px;border-radius:14px;padding:10px 6px;background:#ffffff17;
+  color:white;border:1px solid #ffffff25;font-weight:800}
+.level-btn.active{background:linear-gradient(135deg,#ff66ad,#a35bff);
+  border-color:white;box-shadow:0 4px 0 #592bb4}
+.progress-row{display:flex;justify-content:space-between;align-items:center;
+  font-weight:800;font-size:14px;margin:8px 2px}
+.progress{height:9px;border-radius:20px;background:#ffffff22;overflow:hidden}
+.progress div{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--yellow));
+  border-radius:20px;transition:width .3s}
+.question{text-align:center;padding:10px 0 5px}
+.emoji{font-size:clamp(45px,10vw,72px);filter:drop-shadow(0 5px 0 #0002)}
+.instruction{font-weight:800;color:#d9d2ff;font-size:14px}
+.prompt{font-family:'Bungee',sans-serif;font-size:clamp(20px,5vw,31px);
+  color:white;margin:3px 0 7px;letter-spacing:1px}
+.hint{color:#d9d2ff;font-size:13px;margin:0 0 10px}
+.slots{display:flex;justify-content:center;flex-wrap:wrap;gap:5px;
+  min-height:52px;margin:10px auto 14px}
+.slot{width:clamp(29px,7vw,43px);height:clamp(39px,9vw,51px);
+  border-radius:11px;background:#100e36aa;border:2px dashed #aaa0e7;
+  color:white;font-family:'Bungee',sans-serif;font-size:clamp(15px,4vw,23px);
+  display:grid;place-items:center;transition:.15s}
+.slot.filled{background:linear-gradient(135deg,#ffe66d,#ffb845);
+  border:2px solid white;color:#34205d;box-shadow:0 3px 0 #c17d20}
+.slot:active{transform:scale(.94)}
+.letters{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;
+  min-height:48px;margin:8px 0 12px}
+.tile{width:clamp(39px,9vw,50px);height:clamp(43px,10vw,53px);
+  border-radius:13px;background:linear-gradient(145deg,#fff,#dceaff);
+  color:#30205e;font-family:'Bungee',sans-serif;font-size:20px;
+  box-shadow:0 4px 0 #a4a5e0;transition:transform .12s}
+.tile:active{transform:translateY(3px);box-shadow:0 1px 0 #a4a5e0}
+.tile.used{opacity:.24;pointer-events:none;transform:scale(.88)}
+.actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+.btn{padding:11px 19px;border-radius:15px;font-weight:800;font-size:16px;
+  transition:transform .12s}
+.btn:active{transform:translateY(3px)}
+.btn-main{color:#33205b;background:linear-gradient(135deg,#fff176,#ffc34b);
+  box-shadow:0 5px 0 #c5832a}
+.btn-soft{background:#ffffff1c;border:1px solid #ffffff35;color:white}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.feedback{min-height:27px;text-align:center;font-size:17px;font-weight:800;margin:10px 0 0}
+.feedback.good{color:#8bffca}.feedback.bad{color:#ff9fbf}
+.bowling{position:relative;margin:14px 0 12px;border-radius:22px;overflow:hidden;
+  min-height:260px;border:2px solid #ffffff30;
+  background:linear-gradient(#29215c 0%,#5544a1 37%,#dfb7ff 37%,#a97ce4 100%)}
+.stars{position:absolute;inset:0 0 62% 0;opacity:.7;
+  background-image:radial-gradient(white 1.5px,transparent 2px);
+  background-size:35px 29px}
+.lane{position:absolute;left:9%;right:9%;top:34%;bottom:0;overflow:hidden;
+  background:linear-gradient(90deg,#a86cdd,#f5d4ff 18%,#d6b1fa 50%,#f5d4ff 82%,#a86cdd);
+  clip-path:polygon(31% 0,69% 0,100% 100%,0 100%)}
+.lane:after{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent 0 19%,#ffffff18 20% 20.5%)}
+.lane-line{position:absolute;top:52%;left:30%;right:30%;height:2px;
+  background:#fff9;transform:perspective(60px) rotateX(-10deg)}
+.pin-set{position:absolute;top:34%;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;z-index:2}
+.pin-row{display:flex;justify-content:center;gap:3px}
+.pin{font-size:clamp(20px,5vw,29px);filter:drop-shadow(0 2px 1px #392056);
+  transform-origin:bottom center;transition:transform .5s,opacity .5s}
+.pin.fall{transform:rotate(75deg) translate(12px,7px);opacity:.25}
+.ball{position:absolute;z-index:5;left:50%;bottom:9px;
+  transform:translateX(-50%);font-size:37px;filter:drop-shadow(0 5px 2px #49206b);
+  transition:bottom .75s cubic-bezier(.18,.8,.25,1),left .75s,transform .75s}
+.bowling.throwing .ball{bottom:68%;transform:translateX(-50%) scale(.65) rotate(540deg)}
+.bowling.throwing .pin{transform:rotate(75deg) translate(10px,5px);opacity:.3}
+.bowling.throwing .pin:nth-child(even){transform:rotate(-75deg) translate(-10px,5px)}
+.bowling-label{position:absolute;z-index:6;left:10px;top:9px;
+  font-size:12px;font-weight:800;letter-spacing:1px;background:#17143d99;
+  padding:5px 9px;border-radius:9px}
+.swipe-note{position:absolute;z-index:6;right:10px;top:9px;
+  font-size:12px;font-weight:800;color:#fff3b2}
+.bottom-note{text-align:center;color:#d4ceff;font-size:13px;margin:10px 0 0}
+.overlay{position:fixed;inset:0;z-index:20;background:#0a0824d9;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{width:min(440px,100%);text-align:center;padding:25px 19px;
+  border:1px solid #ffffff45;border-radius:27px;
+  background:linear-gradient(145deg,#3a247d,#17143d);
+  box-shadow:0 20px 80px #0007}
+.modal .big{font-size:64px}
+.modal h2{font-family:'Bungee',sans-serif;color:var(--yellow);font-size:25px;margin:6px}
+.modal p{color:#e0d9ff}
+.custom-input{width:100%;padding:12px;border-radius:14px;border:1px solid #ffffff40;
+  background:#ffffff15;color:white;font-size:15px;margin:12px 0 16px;text-transform:uppercase}
+.custom-input::placeholder{color:#b3a8eb;text-transform:none}
+.hidden{display:none!important}
+.confetti{position:fixed;top:-20px;z-index:50;pointer-events:none;
+  width:9px;height:13px;animation:drop 1.7s linear forwards}
+@keyframes drop{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+@media(max-width:480px){
+ .app{padding:10px 10px 22px}
+ .panel{padding:11px;border-radius:20px}
+ .bowling{min-height:235px}
+ .btn{padding:10px 15px}
+ .hero{padding:12px 0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="logo">SPELLING <span>BOWLING</span> 🎳</div>
+    <button class="sound" id="soundBtn">🔊 SOUND ON</button>
+  </header>
+
+  <section class="hero">
+    <h1>SPELL IT. STRIKE IT!</h1>
+    <p>Build the word. Roll the ball. Knock down the pins!</p>
+  </section>
+
+  <div class="hud">
+    <div class="stat"><small>⭐ SCORE</small><strong id="score">0</strong></div>
+    <div class="stat"><small>🔥 STREAK</small><strong id="streak">0</strong></div>
+    <div class="stat"><small>🎯 STRIKES</small><strong id="strikes">0</strong></div>
+  </div>
+
+  <div class="levels">
+    <button class="level-btn active" id="numbersBtn">🔢 LEVEL 1: NUMBERS</button>
+    <button class="level-btn" id="coloursBtn">🎨 LEVEL 2: COLOURS</button>
+    <button class="level-btn" id="customBtn">✏️ CUSTOM WORDS</button>
+  </div>
+
+  <section class="panel">
+    <div class="progress-row">
+      <span id="levelLabel">LEVEL 1 • NUMBERS</span>
+      <span id="roundLabel">WORD 1 / 10</span>
+    </div>
+    <div class="progress"><div id="progressFill"></div></div>
+
+    <div class="question">
+      <div class="emoji" id="emoji">1️⃣</div>
+      <div class="instruction">SPELL THIS WORD!</div>
+      <div class="prompt" id="prompt">NUMBER ONE</div>
+      <p class="hint" id="hint">Tap the letters in the correct order.</p>
+    </div>
+
+    <div class="slots" id="slots"></div>
+    <div class="letters" id="letters"></div>
+
+    <div class="actions">
+      <button class="btn btn-soft" id="clearBtn">↩ CLEAR</button>
+      <button class="btn btn-main" id="checkBtn">✓ CHECK WORD</button>
+    </div>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+  </section>
+
+  <section class="bowling" id="bowling">
+    <div class="stars"></div>
+    <div class="bowling-label">🎳 BOWLING ARENA</div>
+    <div class="swipe-note" id="swipeNote">SPELL FIRST!</div>
+    <div class="lane"><div class="lane-line"></div></div>
+    <div class="pin-set" id="pinSet">
+      <div class="pin-row"><span class="pin">🎳</span></div>
+      <div class="pin-row"><span class="pin">🎳</span><span class="pin">🎳</span></div>
+      <div class="pin-row"><span class="pin">🎳</span><span class="pin">🎳</span><span class="pin">🎳</span></div>
+      <div class="pin-row"><span class="pin">🎳</span><span class="pin">🎳</span><span class="pin">🎳</span><span class="pin">🎳</span></div>
+    </div>
+    <div class="ball" id="ball">🎱</div>
+  </section>
+
+  <div class="actions">
+    <button class="btn btn-main" id="bowlBtn" disabled>🎳 BOWL NOW!</button>
+    <button class="btn btn-soft hidden" id="nextBtn">NEXT WORD ➜</button>
+  </div>
+  <p class="bottom-note">💡 Tip: Spell the word correctly to unlock your bowling shot!</p>
+</div>
+
+<div class="overlay" id="startOverlay">
+  <div class="modal">
+    <div class="big">🎳✨</div>
+    <h2>SPELLING BOWLING</h2>
+    <p>Ready to become a spelling champion?</p>
+    <p>🔤 Build the word<br>🎯 Check your spelling<br>🎳 Bowl and score points!</p>
+    <button class="btn btn-main" id="startBtn">LET'S PLAY! 🚀</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="customOverlay">
+  <div class="modal">
+    <div class="big">✏️</div>
+    <h2>CREATE YOUR LIST</h2>
+    <p>Enter your spelling words separated by commas:</p>
+    <input type="text" id="customWordInput" class="custom-input" placeholder="e.g. CAT, DOG, APPLE, SMILE" />
+    <div class="actions">
+      <button class="btn btn-soft" id="cancelCustomBtn">CANCEL</button>
+      <button class="btn btn-main" id="saveCustomBtn">START GAME 🚀</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="endOverlay">
+  <div class="modal">
+    <div class="big">🏆</div>
+    <h2>CHAMPION!</h2>
+    <p id="endText">Amazing spelling!</p>
+    <button class="btn btn-main" id="restartBtn">PLAY AGAIN 🔄</button>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  numbers: [
+    {word:"ONE",emoji:"1️⃣",label:"NUMBER ONE"},
+    {word:"TWO",emoji:"2️⃣",label:"NUMBER TWO"},
+    {word:"THREE",emoji:"3️⃣",label:"NUMBER THREE"},
+    {word:"FOUR",emoji:"4️⃣",label:"NUMBER FOUR"},
+    {word:"FIVE",emoji:"5️⃣",label:"NUMBER FIVE"},
+    {word:"SIX",emoji:"6️⃣",label:"NUMBER SIX"},
+    {word:"SEVEN",emoji:"7️⃣",label:"NUMBER SEVEN"},
+    {word:"EIGHT",emoji:"8️⃣",label:"NUMBER EIGHT"},
+    {word:"NINE",emoji:"9️⃣",label:"NUMBER NINE"},
+    {word:"TEN",emoji:"🔟",label:"NUMBER TEN"}
+  ],
+  colours: [
+    {word:"RED",emoji:"🟥",label:"WHAT COLOUR?"},
+    {word:"BLUE",emoji:"🟦",label:"WHAT COLOUR?"},
+    {word:"YELLOW",emoji:"🟨",label:"WHAT COLOUR?"},
+    {word:"GREEN",emoji:"🟩",label:"WHAT COLOUR?"},
+    {word:"ORANGE",emoji:"🟧",label:"WHAT COLOUR?"},
+    {word:"PURPLE",emoji:"🟪",label:"WHAT COLOUR?"},
+    {word:"PINK",emoji:"💗",label:"WHAT COLOUR?"},
+    {word:"BLACK",emoji:"⬛",label:"WHAT COLOUR?"},
+    {word:"WHITE",emoji:"⬜",label:"WHAT COLOUR?"},
+    {word:"BROWN",emoji:"🟫",label:"WHAT COLOUR?"}
+  ],
+  custom: []
+};
+
+let mode="numbers", index=0, score=0, streak=0, strikes=0;
+let placed=[], currentTiles=[], unlocked=false, thrown=false, soundOn=true;
+let audioCtx=null;
+
+const $=id=>document.getElementById(id);
+function beep(freq=440,duration=.12,type="sine"){
+  if(!soundOn)return;
+  try{
+    audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+    const osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
+    osc.type=type; osc.frequency.value=freq;
+    gain.gain.setValueAtTime(.12,audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    osc.start();osc.stop(audioCtx.currentTime+duration);
+  }catch(e){}
+}
+function shuffle(a){
+  const b=[...a];
+  for(let i=b.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [b[i],b[j]]=[b[j],b[i]];
+  }
+  return b;
+}
+function item(){return DATA[mode][index]}
+function setFeedback(msg,type=""){
+  $("feedback").textContent=msg;
+  $("feedback").className="feedback "+type;
+}
+function updateHUD(){
+  $("score").textContent=score;
+  $("streak").textContent=streak;
+  $("strikes").textContent=strikes;
+  $("roundLabel").textContent=`WORD ${index+1} / ${DATA[mode].length}`;
+  $("progressFill").style.width=`${(index/DATA[mode].length)*100}%`;
+}
+function render(){
+  if(!DATA[mode] || DATA[mode].length===0){
+    openCustomModal();
+    return;
+  }
+  const q=item();
+  placed=Array(q.word.length).fill(null);
+  unlocked=false;thrown=false;
+  $("emoji").textContent=q.emoji;
+  $("prompt").textContent=q.label;
+  $("hint").textContent=mode==="numbers"?
+    "Spell the number word. Example: ONE":
+    mode==="colours" ? "Look at the colour. Spell its name!" : "Spell your custom word!";
+  $("slots").innerHTML="";
+  q.word.split("").forEach((letter,i)=>{
+    const slot=document.createElement("button");
+    slot.className="slot";slot.textContent="";
+    slot.setAttribute("aria-label",`Letter slot ${i+1}`);
+    slot.addEventListener("click",()=>removeLetter(i));
+    $("slots").appendChild(slot);
+  });
+  const extras=shuffle(q.word.split(""));
+  const alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  while(extras.length<Math.min(q.word.length+3,10)){
+    const c=alphabet[Math.floor(Math.random()*alphabet.length)];
+    if(!extras.includes(c)||Math.random()>.6)extras.push(c);
+  }
+  currentTiles=shuffle(extras).map((letter,id)=>({letter,id,used:false}));
+  renderTiles();
+  resetPins();
+  $("checkBtn").disabled=false;
+  $("bowlBtn").disabled=true;
+  $("bowlBtn").classList.remove("hidden");
+  $("nextBtn").classList.add("hidden");
+  $("swipeNote").textContent="SPELL FIRST!";
+  $("ball").style.bottom="9px";
+  $("ball").style.left="50%";
+  $("ball").style.transform="translateX(-50%)";
+  $("bowling").classList.remove("throwing");
+  $("levelLabel").textContent=mode==="numbers"?"LEVEL 1 • NUMBERS":mode==="colours"?"LEVEL 2 • COLOURS":"CUSTOM WORDS";
+  $("numbersBtn").classList.toggle("active",mode==="numbers");
+  $("coloursBtn").classList.toggle("active",mode==="colours");
+  $("customBtn").classList.toggle("active",mode==="custom");
+  updateHUD();
+  setFeedback("");
+}
+function renderTiles(){
+  $("letters").innerHTML="";
+  currentTiles.forEach(tile=>{
+    const btn=document.createElement("button");
+    btn.className="tile"+(tile.used?" used":"");
+    btn.textContent=tile.letter;
+    btn.disabled=tile.used||unlocked;
+    btn.setAttribute("aria-label","Letter "+tile.letter);
+    btn.addEventListener("click",()=>placeLetter(tile.id));
+    $("letters").appendChild(btn);
+  });
+}
+function placeLetter(id){
+  if(unlocked)return;
+  const tile=currentTiles.find(t=>t.id===id);
+  const empty=placed.findIndex(v=>v===null);
+  if(!tile||tile.used||empty<0)return;
+  tile.used=true;placed[empty]=id;
+  $("slots").children[empty].textContent=tile.letter;
+  $("slots").children[empty].classList.add("filled");
+  beep(500,.06);
+  renderTiles();
+}
+function removeLetter(slotIndex){
+  if(unlocked||placed[slotIndex]===null)return;
+  const id=placed[slotIndex];
+  const tile=currentTiles.find(t=>t.id===id);
+  if(tile)tile.used=false;
+  placed[slotIndex]=null;
+  $("slots").children[slotIndex].textContent="";
+  $("slots").children[slotIndex].classList.remove("filled");
+  renderTiles();
+  beep(260,.06);
+}
+function clearWord(){
+  if(unlocked)return;
+  placed.fill(null);
+  [...$("slots").children].forEach(s=>{
+    s.textContent="";s.classList.remove("filled");
+  });
+  currentTiles.forEach(t=>t.used=false);
+  renderTiles();setFeedback("");
+}
+function checkWord(){
+  if(unlocked)return;
+  if(placed.some(v=>v===null)){
+    setFeedback("Almost there! Fill every letter slot. ✍️","bad");
+    beep(220,.18,"triangle");return;
+  }
+  const answer=placed.map(id=>currentTiles.find(t=>t.id===id).letter).join("");
+  if(answer!==item().word){
+    setFeedback("Not quite! Try again, spelling superstar! 💪","bad");
+    streak=0;updateHUD();beep(180,.22,"triangle");return;
+  }
+  unlocked=true;
+  score+=10+Math.min(streak,5)*2;
+  streak++;
+  updateHUD();
+  $("checkBtn").disabled=true;
+  $("bowlBtn").disabled=false;
+  $("swipeNote").textContent="YOUR TURN!";
+  setFeedback("PERFECT SPELLING! 🎉 Now bowl!","good");
+  [...$("slots").children].forEach(s=>s.classList.add("filled"));
+  renderTiles();
+  beep(660,.1);setTimeout(()=>beep(880,.16),100);
+}
+function resetPins(){
+  $("pinSet").querySelectorAll(".pin").forEach(p=>p.classList.remove("fall"));
+}
+function bowl(){
+  if(!unlocked||thrown)return;
+  thrown=true;
+  $("bowlBtn").disabled=true;
+  $("bowling").classList.add("throwing");
+  $("swipeNote").textContent="STRIKE!!!";
+  beep(110,.45,"sawtooth");
+  setTimeout(()=>{
+    const pins=[...$("pinSet").querySelectorAll(".pin")];
+    const knocked=Math.floor(Math.random()*4)+7;
+    pins.forEach((pin,i)=>{if(i<knocked)pin.classList.add("fall")});
+    const points=knocked*5;
+    score+=points;
+    if(knocked===10){strikes++;score+=10;setFeedback(`STRIKE!!! +${points+10} POINTS! 🔥`,"good");}
+    else setFeedback(`Amazing! ${knocked} pins down! +${points} points! 🎳`,"good");
+    updateHUD();confetti();
+    $("bowlBtn").classList.add("hidden");
+    $("nextBtn").classList.remove("hidden");
+    $("nextBtn").textContent=index===DATA[mode].length-1?
+      (mode==="numbers"?"GO TO COLOURS 🎨":"SEE RESULTS 🏆"):"NEXT WORD ➜";
+    setTimeout(()=>beep(660,.1),100);
+    setTimeout(()=>beep(880,.15),220);
+  },650);
+}
+function next(){
+  if(index<DATA[mode].length-1){index++;render();return}
+  if(mode==="numbers"){
+    mode="colours";index=0;render();
+    setFeedback("Level 1 complete! Let's learn colours! 🎨","good");
+    return;
+  }
+  $("endText").textContent=`You scored ${score} points and got ${strikes} strikes. Keep practising, champion!`;
+  $("endOverlay").classList.remove("hidden");
+}
+function changeMode(newMode){
+  if(newMode==="custom"){
+    openCustomModal();
+    return;
+  }
+  mode=newMode;index=0;render();
+}
+function openCustomModal(){
+  $("customOverlay").classList.remove("hidden");
+  setTimeout(()=>$("customWordInput").focus(),100);
+}
+function saveCustomList(){
+  const raw=$("customWordInput").value.trim();
+  if(!raw)return;
+  const parsed=raw.sp
